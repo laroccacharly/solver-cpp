@@ -14,7 +14,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 enable_language(CXX)
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(${PROJECT_NAME} solver.cpp)
+add_executable(${PROJECT_NAME} main.cpp src/diet_c++.cpp)
 
 # Link fmt
 find_package(fmt REQUIRED)

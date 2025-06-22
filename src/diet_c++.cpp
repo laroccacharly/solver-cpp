@@ -3,15 +3,14 @@
 /* Solve the classic diet model, showing how to add constraints
    to an existing model. */
 
+
 #include "gurobi_c++.h"
 using namespace std;
 
 void printSolution(GRBModel& model, int nCategories, int nFoods,
                    GRBVar* buy, GRBVar* nutrition);
 
-int
-main(int argc,
-     char *argv[])
+bool solveDiet()
 {
   GRBEnv* env = 0;
   GRBVar* nutrition = 0;
@@ -93,21 +92,36 @@ main(int argc,
     model.optimize();
     printSolution(model, nCategories, nFoods, buy, nutrition);
 
+    // Clean up memory
+    delete[] nutrition;
+    delete[] buy;
+    delete env;
+    
+    return true;
   }
   catch (GRBException e)
   {
     cout << "Error code = " << e.getErrorCode() << endl;
     cout << e.getMessage() << endl;
+    
+    // Clean up memory in case of exception
+    delete[] nutrition;
+    delete[] buy;
+    delete env;
+    
+    return false;
   }
   catch (...)
   {
     cout << "Exception during optimization" << endl;
+    
+    // Clean up memory in case of exception
+    delete[] nutrition;
+    delete[] buy;
+    delete env;
+    
+    return false;
   }
-
-  delete[] nutrition;
-  delete[] buy;
-  delete env;
-  return 0;
 }
 
 void printSolution(GRBModel& model, int nCategories, int nFoods,
