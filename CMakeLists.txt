@@ -14,6 +14,14 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 enable_language(CXX)
 set(CMAKE_CXX_STANDARD 17)
 
+# Debug configuration - Add debug symbols and sanitizers
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer")
+
+# Set default build type to Debug if not specified
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
 add_executable(${PROJECT_NAME} main.cpp src/diet_c++.cpp)
 
 # Link fmt
