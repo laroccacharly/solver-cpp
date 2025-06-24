@@ -1,11 +1,12 @@
 #include <fmt/core.h>
-#include "src/diet_c++.h"
+// #include "src/diet_c++.h"
+#include "src/solve_mps.h"
 
 using namespace std;
 
 int main() {
-    fmt::print("Starting Gurobi example...\n");
-    auto result = solveDiet();
-    fmt::print("Result: {}\n", result);
+    fmt::print("Starting main...\n");
+    // solveDiet();
+    solveMps();
     return 0;
 } 

@@ -22,7 +22,10 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-add_executable(${PROJECT_NAME} main.cpp src/diet_c++.cpp)
+add_executable(${PROJECT_NAME} main.cpp 
+    src/diet_c++.cpp
+    src/solve_mps.cpp
+)
 
 # Link fmt
 find_package(fmt REQUIRED)
