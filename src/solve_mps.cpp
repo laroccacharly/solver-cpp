@@ -1,5 +1,6 @@
 // Solves an MPS file using Gurobi. 
 
+#include "solve_mps.h"
 #include "gurobi_c++.h"
 #include "fmt/core.h"
 #include <string>
@@ -7,6 +8,18 @@
 #include <fstream>
 
 using namespace std;
+
+
+vector<string> loadInstanceNames() {
+    ifstream file("data/instance_names.txt");
+    vector<string> instance_names;
+    string line;
+    while (getline(file, line)) {
+        instance_names.push_back(line);
+    }
+    fmt::print("Loaded {} instance names\n", instance_names.size());
+    return instance_names;
+}
 
 bool isBinary(GRBVar& var) {
     char vtype = var.get(GRB_CharAttr_VType);
@@ -40,7 +53,8 @@ class CallbackState: public GRBCallback
     int num_binary_vars;
     vector<CallbackMetric> metrics;
     chrono::steady_clock::time_point start_time;
-
+    int error_count = 0;
+    
     void handleMipNode() {
       int solcnt = getIntInfo(GRB_CB_MIPNODE_SOLCNT);
       int phase = getIntInfo(GRB_CB_MIPNODE_PHASE);
@@ -76,14 +90,10 @@ class CallbackState: public GRBCallback
     ~CallbackState() {
       // We don't delete binary_vars here since it's managed by the caller
     }
-    void printMetrics() {
-      fmt::print("Metrics:\n");
-      for (const auto& metric : metrics) {
-        fmt::print("Non-zero count: {}\n", metric.non_zero_count);
-        fmt::print("Phase: {}\n", metric.phase);
-        fmt::print("Solution count: {}\n", metric.solcnt);
-        fmt::print("Elapsed time (ms): {}\n", metric.elapsed_ms);
-      }
+    void printSummary() {
+      fmt::print("Summary:\n");
+      // Print the number of solutions found
+      fmt::print("Number of solutions found using callback: {}\n", metrics.size());
     }
 
     void saveMetricsCSV() {
@@ -106,14 +116,16 @@ class CallbackState: public GRBCallback
           handleMipNode();
         }
       } catch (GRBException e) {
-        fmt::print("Error: {}\n", e.getMessage());
+        error_count++;
       }
     }
 };
 
 void solveMpsMain() {
-    std::string path = "data/academictimetablesmall.mps";
-    // std::string path = "data/50v-10.mps";
+    vector<string> instance_names = loadInstanceNames();
+    string first_instance_name = instance_names[0];
+    string path = "/Users/charly/.miplib_benchmark/mps_files/" + first_instance_name + ".mps";
+    fmt::print("Solving instance: {}\n", path);
     GRBEnv env = GRBEnv();
     GRBModel model = GRBModel(env, path);
 
@@ -143,7 +155,7 @@ void solveMpsMain() {
     model.optimize();
 
     fmt::print("Objective: {}\n", model.get(GRB_DoubleAttr_ObjVal));
-    // callbackState.printMetrics();
+    callbackState.printSummary();
     callbackState.saveMetricsCSV();
     // Clean up
     delete[] binary_variables;
