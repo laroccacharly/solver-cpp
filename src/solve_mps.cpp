@@ -6,9 +6,9 @@
 #include <string>
 #include <chrono>
 #include <fstream>
+#include <cstdlib>
 
 using namespace std;
-
 
 vector<string> loadInstanceNames() {
     ifstream file("data/instance_names.txt");
@@ -121,10 +121,20 @@ class CallbackState: public GRBCallback
     }
 };
 
+string getMpsDir() {
+    const char* mps_files_dir = getenv("MPS_FILES_DIR");
+    if (mps_files_dir == nullptr) {
+        fmt::print("Error: The environment variable MPS_FILES_DIR is not set.\n");
+        return "";
+    }
+    return string(mps_files_dir);
+}
+
 void solveMpsMain() {
     vector<string> instance_names = loadInstanceNames();
     string first_instance_name = instance_names[0];
-    string path = "/Users/charly/.miplib_benchmark/mps_files/" + first_instance_name + ".mps";
+
+    string path = fmt::format("{}/{}.mps", getMpsDir(), first_instance_name);
     fmt::print("Solving instance: {}\n", path);
     GRBEnv env = GRBEnv();
     GRBModel model = GRBModel(env, path);
