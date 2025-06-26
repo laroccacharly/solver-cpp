@@ -3,7 +3,7 @@
 /* Solve the classic diet model, showing how to add constraints
    to an existing model. */
 
-
+#include "diet_c++.h"
 #include "gurobi_c++.h"
 #include "fmt/core.h"
 using namespace std;
