@@ -1,6 +1,3 @@
-#ifndef SOLVE_MPS_H
-#define SOLVE_MPS_H
+#pragma once
 
 void solveMps();
-
-#endif
