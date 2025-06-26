@@ -48,12 +48,42 @@ struct CallbackMetric {
 
 class CallbackState: public GRBCallback
 {
+  public:
+    CallbackState(GRBVar* binary_vars, int num_binary_vars, string instance_name) {
+        this->instance_name = instance_name;
+        this->binary_vars = binary_vars;
+        this->num_binary_vars = num_binary_vars;
+        start_time = chrono::steady_clock::now();
+    }
+
+    void printSummary() {
+      fmt::print("Summary:\n");
+      // Print the number of solutions found
+      fmt::print("Number of solutions found using callback: {}\n", metrics.size());
+    }
+
+    void saveMetricsCSV() {
+        string filename = fmt::format("data/{}_metrics.csv", instance_name);
+        ofstream file(filename);
+        file << "non_zero_count,phase,solcnt,elapsed_ms,instance_name\n";
+        for (const auto& metric : metrics) {
+            file << metric.non_zero_count << "," 
+                << metric.phase << "," 
+                << metric.solcnt << "," 
+                << metric.elapsed_ms << ","
+                << instance_name
+                << endl;
+        }
+        file.close();
+    }
+
   private:
     GRBVar* binary_vars;
     int num_binary_vars;
     vector<CallbackMetric> metrics;
     chrono::steady_clock::time_point start_time;
     int error_count = 0;
+    string instance_name;
     
     void handleMipNode() {
       int solcnt = getIntInfo(GRB_CB_MIPNODE_SOLCNT);
@@ -78,37 +108,6 @@ class CallbackState: public GRBCallback
       delete[] x;
     }
 
-
-
-  public:
-    CallbackState(GRBVar* vars, int count) {
-        binary_vars = vars;
-        num_binary_vars = count;
-        start_time = chrono::steady_clock::now();
-    }
-
-    ~CallbackState() {
-      // We don't delete binary_vars here since it's managed by the caller
-    }
-    void printSummary() {
-      fmt::print("Summary:\n");
-      // Print the number of solutions found
-      fmt::print("Number of solutions found using callback: {}\n", metrics.size());
-    }
-
-    void saveMetricsCSV() {
-        string filename = "metrics.csv";
-        ofstream file(filename);
-        file << "non_zero_count,phase,solcnt,elapsed_ms\n";
-        for (const auto& metric : metrics) {
-            file << metric.non_zero_count << "," 
-                << metric.phase << "," 
-                << metric.solcnt << "," 
-                << metric.elapsed_ms 
-                << endl;
-        }
-        file.close();
-    }
   protected:
     void callback () {
       try {
@@ -130,36 +129,39 @@ string getMpsDir() {
     return string(mps_files_dir);
 }
 
-void solveMpsMain() {
-    vector<string> instance_names = loadInstanceNames();
-    string first_instance_name = instance_names[0];
+struct SolveConfig {
+  string instance_name;
+  int time_limit_s = 10;
+};
 
-    string path = fmt::format("{}/{}.mps", getMpsDir(), first_instance_name);
+void solveMpsMain(SolveConfig config) {
+    string instance_name = config.instance_name;
+
+    string path = fmt::format("{}/{}.mps", getMpsDir(), instance_name);
     fmt::print("Solving instance: {}\n", path);
     GRBEnv env = GRBEnv();
     GRBModel model = GRBModel(env, path);
 
-    model.set(GRB_DoubleParam_TimeLimit, 10);
+    model.set(GRB_DoubleParam_TimeLimit, config.time_limit_s);
     // model.set(GRB_IntParam_SolutionLimit, 20);
     int num_variables = model.get(GRB_IntAttr_NumVars);
     
-    vector<int> binary_indices;
+    vector<GRBVar> binary_variables;
     for (int i = 0; i < num_variables; i++) {
         GRBVar var = model.getVar(i);
         if (isBinary(var)) {
-            binary_indices.push_back(i);
+            binary_variables.push_back(var);
         }
     }
 
-    GRBVar* binary_variables = new GRBVar[binary_indices.size()];
-    for (int i = 0; i < binary_indices.size(); i++) {
-        binary_variables[i] = model.getVar(binary_indices[i]);
-    }
-
-    fmt::print("Model has {} binary variables\n", binary_indices.size());
+    fmt::print("Model has {} binary variables\n", binary_variables.size());
     fmt::print("Model has {} variables\n", num_variables);
 
-    CallbackState callbackState(binary_variables, binary_indices.size());
+    CallbackState callbackState(
+      binary_variables.data(), 
+      binary_variables.size(),
+      instance_name
+    );
     model.setCallback(&callbackState);
 
     model.optimize();
@@ -167,15 +169,29 @@ void solveMpsMain() {
     fmt::print("Objective: {}\n", model.get(GRB_DoubleAttr_ObjVal));
     callbackState.printSummary();
     callbackState.saveMetricsCSV();
-    // Clean up
-    delete[] binary_variables;
+    // Clean up is now automatic thanks to std::vector
 }
 
-void solveMps() {
+void solveMps(SolveConfig config) {
     try {
-        solveMpsMain();
+        solveMpsMain(config);
     } catch (GRBException e) {
         fmt::print("Error: {}\n", e.getMessage());
     }
 }
 
+void solveOneMps() {
+  vector<string> instance_names = loadInstanceNames();
+  string instance_name = instance_names[0];
+  SolveConfig config = {instance_name, 10};
+  solveMps(config);
+}
+
+void solveAllMps() {
+  vector<string> instance_names = loadInstanceNames();
+  fmt::print("Solving {} instances\n", instance_names.size());
+  for (const auto& instance_name : instance_names) {
+    SolveConfig config = {instance_name, 10};
+    solveMps(config);
+  }
+}

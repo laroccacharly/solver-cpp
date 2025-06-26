@@ -7,6 +7,7 @@ using namespace std;
 int main() {
     fmt::print("Starting main...\n");
     // solveDiet();
-    solveMps();
+    solveOneMps();
+    // solveAllMps();
     return 0;
 } 

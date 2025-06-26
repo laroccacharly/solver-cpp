@@ -1,3 +1,4 @@
 #pragma once
 
-void solveMps();
+void solveAllMps();
+void solveOneMps();
