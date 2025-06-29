@@ -31,13 +31,6 @@ bool isBinary(GRBVar& var) {
     return false;
 }
 
-struct CallbackMetric {
-    int non_zero_count;
-    int phase;
-    int solcnt;
-    int64_t elapsed_ms;
-};
-
 class CallbackState: public GRBCallback
 {
   public:
@@ -52,6 +45,10 @@ class CallbackState: public GRBCallback
       fmt::print("Summary:\n");
       // Print the number of solutions found
       fmt::print("Number of solutions found using callback: {}\n", metrics.size());
+    }
+
+    vector<CallbackMetric>& getMetrics() {
+        return metrics;
     }
 
     void saveMetricsCSV() {
@@ -91,11 +88,12 @@ class CallbackState: public GRBCallback
       }
       auto now = chrono::steady_clock::now();
       auto elapsed_ms = chrono::duration_cast<chrono::milliseconds>(now - start_time).count();
+      int non_zero_count = non_zero_indices.size();
       metrics.push_back({
-        (int)non_zero_indices.size(), 
-        phase, 
-        solcnt, 
-        elapsed_ms,
+        .non_zero_count = non_zero_count, 
+        .phase = phase, 
+        .solcnt = solcnt, 
+        .elapsed_ms = elapsed_ms,
       }); 
       delete[] x;
     }
@@ -121,20 +119,27 @@ string getMpsDir() {
     return string(mps_files_dir);
 }
 
-struct SolveConfig {
-  string instance_name;
-  int time_limit_s = 10;
-};
+GRBAttributes createGRBAttributes(GRBModel& model) {
+  return GRBAttributes{
+    .MIPGap = model.get(GRB_DoubleAttr_MIPGap), 
+    .Runtime = model.get(GRB_DoubleAttr_Runtime),
+    .SolCount = model.get(GRB_IntAttr_SolCount),
+    .NodeCount = model.get(GRB_DoubleAttr_NodeCount), 
+    .Status = model.get(GRB_IntAttr_Status),
+    .ObjVal = model.get(GRB_DoubleAttr_ObjVal),
+    .MaxMemUsed = model.get(GRB_DoubleAttr_MaxMemUsed)
+  };
+}
 
-void solveMpsMain(SolveConfig config) {
-    string instance_name = config.instance_name;
+void solveMpsMain(Job job) {
+    string instance_name = job.instance_id;
 
     string path = fmt::format("{}/{}.mps", getMpsDir(), instance_name);
     fmt::print("Solving instance: {}\n", path);
     GRBEnv env = GRBEnv();
     GRBModel model = GRBModel(env, path);
 
-    model.set(GRB_DoubleParam_TimeLimit, config.time_limit_s);
+    model.set(GRB_DoubleParam_TimeLimit, job.time_limit_s);
     // model.set(GRB_IntParam_SolutionLimit, 20);
     int num_variables = model.get(GRB_IntAttr_NumVars);
     
@@ -160,30 +165,38 @@ void solveMpsMain(SolveConfig config) {
 
     fmt::print("Objective: {}\n", model.get(GRB_DoubleAttr_ObjVal));
     callbackState.printSummary();
-    callbackState.saveMetricsCSV();
-    // Clean up is now automatic thanks to std::vector
+
+    auto storage = get_storage();
+    int job_id = storage.insert(job);
+    job.id = job_id;
+    fmt::print("Inserted job with id: {}\n", job.id);
+
+    GRBAttributes attributes = createGRBAttributes(model);
+    attributes.job_id = job.id;
+    storage.insert(attributes);
+
+    auto& metrics = callbackState.getMetrics();
+    for (auto& metric : metrics) {
+        metric.job_id = job.id;
+    }
+    storage.insert_range(metrics.begin(), metrics.end());
 }
 
-void solveMps(SolveConfig config) {
+void solveMps(Job job) {
     try {
-        solveMpsMain(config);
+        solveMpsMain(job);
     } catch (GRBException e) {
         fmt::print("Error: {}\n", e.getMessage());
     }
 }
 
 void solveOneMps() {
-  vector<string> instance_names = get_instance_names();
-  string instance_name = instance_names[0];
-  SolveConfig config = {instance_name, 10};
-  solveMps(config);
+  vector<Instance> instances = get_instances();
+  Instance instance = instances[0];
+  Job job = {
+    .instance_id = instance.id,
+    .time_limit_s = 10,
+  };
+  solveMps(job);
 }
 
-void solveAllMps() {
-  vector<string> instance_names = get_instance_names();
-  fmt::print("Solving {} instances\n", instance_names.size());
-  for (const auto& instance_name : instance_names) {
-    SolveConfig config = {instance_name, 10};
-    solveMps(config);
-  }
-}

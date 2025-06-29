@@ -6,6 +6,7 @@
 # ///
 import sqlite3
 import pandas as pd
+import os
 
 db_path = "data/db.sqlite"
 
@@ -13,6 +14,9 @@ def show_tables(db_path, num_rows=10):
     """
     Connects to a SQLite database, reads all tables, and prints the first `num_rows` of each table.
     """
+    file_size = os.path.getsize(db_path)
+    print(f"Database size: {file_size / 1024:.2f} KB")
+
     try:
         con = sqlite3.connect(db_path)
         cursor = con.cursor()
