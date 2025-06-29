@@ -3,3 +3,4 @@ build/
 .cache 
 *.csv
 .DS_Store
+data/db.sqlite

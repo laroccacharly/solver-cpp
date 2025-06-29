@@ -1,6 +1,8 @@
 // Solves an MPS file using Gurobi. 
 
 #include "solve_mps.h"
+#include "db.h" 
+
 #include "gurobi_c++.h"
 #include "fmt/core.h"
 #include <string>
@@ -10,16 +12,6 @@
 
 using namespace std;
 
-vector<string> loadInstanceNames() {
-    ifstream file("data/instance_names.txt");
-    vector<string> instance_names;
-    string line;
-    while (getline(file, line)) {
-        instance_names.push_back(line);
-    }
-    fmt::print("Loaded {} instance names\n", instance_names.size());
-    return instance_names;
-}
 
 bool isBinary(GRBVar& var) {
     char vtype = var.get(GRB_CharAttr_VType);
@@ -181,14 +173,14 @@ void solveMps(SolveConfig config) {
 }
 
 void solveOneMps() {
-  vector<string> instance_names = loadInstanceNames();
+  vector<string> instance_names = get_instance_names();
   string instance_name = instance_names[0];
   SolveConfig config = {instance_name, 10};
   solveMps(config);
 }
 
 void solveAllMps() {
-  vector<string> instance_names = loadInstanceNames();
+  vector<string> instance_names = get_instance_names();
   fmt::print("Solving {} instances\n", instance_names.size());
   for (const auto& instance_name : instance_names) {
     SolveConfig config = {instance_name, 10};

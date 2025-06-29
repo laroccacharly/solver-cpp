@@ -25,7 +25,13 @@ endif()
 add_executable(${PROJECT_NAME} main.cpp 
     src/diet_c++.cpp
     src/solve_mps.cpp
+    src/db.cpp
 )
+
+# Link sqlite-orm
+find_package(SqliteOrm CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE sqlite_orm::sqlite_orm)
+
 
 # Link fmt
 find_package(fmt REQUIRED)
