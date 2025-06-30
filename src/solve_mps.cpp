@@ -195,19 +195,22 @@ void solveOneMps() {
   Instance instance = instances[0];
   Job job = {
     .instance_id = instance.id,
-    .time_limit_s = 10,
   };
   solveJob(job);
 }
 
 void solveAll() { 
   vector<Instance> instances = get_instances();
-  int max_jobs = 3; 
-  instances.resize(max_jobs);
-  for (Instance instance : instances) {
+  int time_limit_s = 60;
+  // int max_jobs = 3; 
+  // instances.resize(max_jobs);
+  int instance_count = instances.size();
+  for (int i = 0; i < instance_count; i++) {
+    fmt::print("Solving instance {}/{}\n", i + 1, instance_count);
+    Instance instance = instances[i];
     Job job = {
       .instance_id = instance.id,
-      .time_limit_s = 10,
+      .time_limit_s = time_limit_s,
     };
     solveJob(job);
   }
