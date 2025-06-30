@@ -8,8 +8,8 @@
 # ///
 
 import pandas as pd
-import plotly.express as px
 import duckdb
+import plotly.graph_objects as go
 
 def get_sqlite_path() -> str: 
     return "data/db.sqlite"
@@ -39,15 +39,34 @@ def get_latest_job_per_instance_df() -> pd.DataFrame:
     FROM sqlitedb.instances AS i
     LEFT JOIN latest_jobs AS j ON i.id = j.instance_id
     LEFT JOIN sqlitedb.grb_attributes AS g ON j.id = g.job_id
-    ORDER BY i.name
+    ORDER BY g.mip_gap ASC
     """
 
     df = con.execute(query).fetch_df()
     con.close()
     return df
 
+def plotly_table(df: pd.DataFrame) -> go.Figure:
+    return go.Figure(
+        data=[
+            go.Table(
+                header=dict(
+                    values=list(df.columns), fill_color="paleturquoise", align="left"
+                ),
+                cells=dict(
+                    values=[df[col] for col in df.columns],
+                    fill_color="lavender",
+                    align="left",
+                ),
+            )
+        ]
+    )
+
 def run():
     df = get_latest_job_per_instance_df()
     print(df)
+    fig = plotly_table(df)
+    fig.show()
 
-run()
+if __name__ == "__main__":
+    run()
