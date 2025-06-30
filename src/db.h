@@ -64,7 +64,7 @@ void sync_db();
 void seed_instances();
 vector<string> get_instance_names();
 vector<Instance> get_instances();
-void batch_insert_metrics(vector<CallbackMetric>& metrics);
+void batch_insert_metrics(vector<CallbackMetric>& metrics, int batch_size = 1000);
 
 inline auto get_storage() {
     return make_storage("data/db.sqlite",

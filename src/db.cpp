@@ -39,7 +39,7 @@ void seed_instances() {
     fmt::print("Seeded {} instances\n", instances.size());
 }
 
-void batch_insert_metrics(vector<CallbackMetric>& metrics, int batch_size = 1000) {
+void batch_insert_metrics(vector<CallbackMetric>& metrics, int batch_size) {
     auto storage = get_storage();
     for (size_t i = 0; i < metrics.size(); i += batch_size) {
         auto batch_start = metrics.begin() + i;
