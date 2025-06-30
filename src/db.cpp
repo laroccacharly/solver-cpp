@@ -2,6 +2,7 @@
 #include <fstream>
 #include "fmt/core.h"
 #include "sqlite_orm/sqlite_orm.h"
+#include <algorithm>
 
 using namespace std;
 using namespace sqlite_orm;
@@ -36,6 +37,15 @@ void seed_instances() {
     }
     vector<Instance> instances = get_instances();
     fmt::print("Seeded {} instances\n", instances.size());
+}
+
+void batch_insert_metrics(vector<CallbackMetric>& metrics, int batch_size = 1000) {
+    auto storage = get_storage();
+    for (size_t i = 0; i < metrics.size(); i += batch_size) {
+        auto batch_start = metrics.begin() + i;
+        auto batch_end = metrics.begin() + std::min(i + batch_size, metrics.size());
+        storage.insert_range(batch_start, batch_end);
+    }
 }
 
 

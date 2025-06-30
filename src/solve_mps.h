@@ -2,3 +2,4 @@
 
 
 void solveOneMps();
+void solveAll();

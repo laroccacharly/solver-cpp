@@ -131,7 +131,7 @@ GRBAttributes createGRBAttributes(GRBModel& model) {
   };
 }
 
-void solveMpsMain(Job job) {
+void _solveJob(Job job) {
     string instance_name = job.instance_id;
 
     string path = fmt::format("{}/{}.mps", getMpsDir(), instance_name);
@@ -179,12 +179,12 @@ void solveMpsMain(Job job) {
     for (auto& metric : metrics) {
         metric.job_id = job.id;
     }
-    storage.insert_range(metrics.begin(), metrics.end());
+    batch_insert_metrics(metrics);
 }
 
-void solveMps(Job job) {
+void solveJob(Job job) {
     try {
-        solveMpsMain(job);
+        _solveJob(job);
     } catch (GRBException e) {
         fmt::print("Error: {}\n", e.getMessage());
     }
@@ -197,6 +197,18 @@ void solveOneMps() {
     .instance_id = instance.id,
     .time_limit_s = 10,
   };
-  solveMps(job);
+  solveJob(job);
 }
 
+void solveAll() { 
+  vector<Instance> instances = get_instances();
+  int max_jobs = 3; 
+  instances.resize(max_jobs);
+  for (Instance instance : instances) {
+    Job job = {
+      .instance_id = instance.id,
+      .time_limit_s = 10,
+    };
+    solveJob(job);
+  }
+}
