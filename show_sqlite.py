@@ -15,7 +15,8 @@ def show_tables(db_path, num_rows=10):
     Connects to a SQLite database, reads all tables, and prints the first `num_rows` of each table.
     """
     file_size = os.path.getsize(db_path)
-    print(f"Database size: {file_size / 1024:.2f} KB")
+    file_size_mb = file_size / 1024 / 1024
+    print(f"Database size: {file_size_mb:.2f} MB\n")
 
     try:
         con = sqlite3.connect(db_path)
@@ -31,12 +32,17 @@ def show_tables(db_path, num_rows=10):
 
         for table_name in tables:
             table_name = table_name[0]
-            print(f"--- Table: {table_name} ---")
+            
+            # Get the total number of rows in the table
+            cursor.execute(f'SELECT COUNT(*) FROM "{table_name}"')
+            row_count = cursor.fetchone()[0]
+            
+            print(f"--- Table: {table_name} (Total rows: {row_count}) ---")
             
             try:
                 # Using pandas to read and print the table in a pretty format
-                df = pd.read_sql_query(f"SELECT * FROM \"{table_name}\"", con)
-                print(df.head(num_rows))
+                df = pd.read_sql_query(f'SELECT * FROM "{table_name}" LIMIT {num_rows}', con)
+                print(df)
             
             except pd.io.sql.DatabaseError as e:
                 print(f"Could not read table '{table_name}': {e}")
