@@ -11,91 +11,59 @@ import pandas as pd
 def get_sqlite_path() -> str: 
     return "data/db.sqlite"
 
-def create_selected_instances_table():
+def set_selected_instances():
     """
-    Create a new table called selected_instances with instances that have
-    a mip_gap above 0.05 and below 10.
+    An instance is selected if it has a mip_gap above 0.05 and below 10.
+    We set the bool selected to true for these instances.
     """
     db_path = get_sqlite_path()
-    
-    try:
-        con = sqlite3.connect(db_path)
-        cursor = con.cursor()
-        
-        # First, drop the table if it exists
-        cursor.execute("DROP TABLE IF EXISTS selected_instances")
-        
-        # Create the selected_instances table
-        create_table_query = """
-        CREATE TABLE selected_instances (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            created_at INTEGER
-        )
-        """
-        cursor.execute(create_table_query)
-        
-        # Insert data from instances with mip_gap between 0.05 and 10
-        insert_query = """
-        INSERT INTO selected_instances
-        WITH latest_jobs AS (
-            SELECT * FROM (
-                SELECT
-                    *,
-                    ROW_NUMBER() OVER (PARTITION BY instance_id ORDER BY created_at DESC) as rn
-                FROM jobs
-            )
-            WHERE rn = 1
-        )
-        SELECT
-            i.id,
-            i.name,
-            i.created_at
-        FROM instances AS i
-        INNER JOIN latest_jobs AS j ON i.id = j.instance_id
-        INNER JOIN grb_attributes AS g ON j.id = g.job_id
-        WHERE g.mip_gap > 0.05 AND g.mip_gap < 10
-        """
-        cursor.execute(insert_query)
-        
-        # Get count of inserted rows
-        cursor.execute("SELECT COUNT(*) FROM selected_instances")
-        count = cursor.fetchone()[0]
-        
-        con.commit()
-        print(f"Successfully created selected_instances table with {count} instances")
-        print("Criteria: mip_gap > 0.05 AND mip_gap < 10")
-        
-        # Show the selected instances
-        cursor.execute("SELECT id, name FROM selected_instances ORDER BY name")
-        results = cursor.fetchall()
-        
-        print("\nSelected instances:")
-        for id, name in results:
-            print(f"  {id}: {name}")
-            
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-    finally:
-        if 'con' in locals() and con:
-            con.close()
+    con = sqlite3.connect(db_path)
+    cursor = con.cursor()
 
-def show_selected_instances():
+    # First, set all instances to not selected
+    cursor.execute("UPDATE instances SET selected = 0")
+
+    # Now, find the instances to select
+    query = """
+    WITH latest_jobs AS (
+        SELECT
+            instance_id,
+            id as job_id
+        FROM (
+            SELECT
+                j.*,
+                ROW_NUMBER() OVER (PARTITION BY j.instance_id ORDER BY j.created_at DESC) as rn
+            FROM jobs j
+        )
+        WHERE rn = 1
+    )
+    SELECT
+        lj.instance_id
+    FROM latest_jobs lj
+    JOIN grb_attributes g ON lj.job_id = g.job_id
+    WHERE g.mip_gap > 0.05 AND g.mip_gap < 10
     """
-    Display the contents of the selected_instances table.
-    """
-    db_path = get_sqlite_path()
-    
-    try:
-        con = sqlite3.connect(db_path)
-        df = pd.read_sql_query("SELECT * FROM selected_instances ORDER BY name", con)
-        print("Selected Instances Table:")
-        print(df)
+
+    cursor.execute(query)
+    selected_instance_ids = [row[0] for row in cursor.fetchall()]
+
+    if not selected_instance_ids:
+        print("No instances to select.")
         con.close()
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
+        return
+
+    # Update selected instances
+    # Create a string of question marks for the IN clause
+    placeholders = ",".join("?" for _ in selected_instance_ids)
+    update_query = f"UPDATE instances SET selected = 1 WHERE id IN ({placeholders})"
+
+    cursor.execute(update_query, selected_instance_ids)
+
+    print(f"Selected {len(selected_instance_ids)} instances.")
+
+    con.commit()
+    con.close()
+
 
 if __name__ == "__main__":
-    create_selected_instances_table()
-    print("\n" + "="*50)
-    show_selected_instances()
+    set_selected_instances() 
