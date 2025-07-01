@@ -5,6 +5,7 @@
 
 #include "gurobi_c++.h"
 #include "fmt/core.h"
+#include "fmt/ranges.h"
 #include <string>
 #include <chrono>
 #include <fstream>
@@ -131,6 +132,23 @@ GRBAttributes createGRBAttributes(GRBModel& model) {
   };
 }
 
+// A solution is a vector of indices for the non zero variables 
+vector<int> get_best_solution_from_model(GRBModel& model, vector<GRBVar>& binary_variables, double tolerance = 0.001) {
+  vector<int> solution;
+  for (int i = 0; i < binary_variables.size(); i++) {
+    GRBVar var = binary_variables[i];
+    double value = var.get(GRB_DoubleAttr_X);
+    if (value > tolerance) {
+      solution.push_back(i);
+    }
+  } 
+  return solution;
+}
+
+string convertToString(vector<int>& solution) {
+  return fmt::format("{}", fmt::join(solution, ","));
+}
+
 void _solveJob(Job job) {
     string instance_name = job.instance_id;
 
@@ -149,6 +167,24 @@ void _solveJob(Job job) {
         if (isBinary(var)) {
             binary_variables.push_back(var);
         }
+    }
+
+    if (job.warm_start) {
+      auto best_solution = get_best_solution_for_instance(instance_name);
+      if (best_solution) {
+        // start by setting all binary variables to 0
+        for (int i = 0; i < binary_variables.size(); i++) {
+          binary_variables[i].set(GRB_DoubleAttr_Start, 0.0);
+        }
+
+        fmt::print("Found best solution for instance, applying warm start\n");
+        vector<int> solution = *best_solution;
+        for (int var_index : solution) {
+          binary_variables[var_index].set(GRB_DoubleAttr_Start, 1.0);
+        }
+      } else {
+        fmt::print("No best solution found for instance, skipping warm start\n");
+      }
     }
 
     fmt::print("Model has {} binary variables\n", binary_variables.size());
@@ -173,6 +209,13 @@ void _solveJob(Job job) {
 
     GRBAttributes attributes = createGRBAttributes(model);
     attributes.job_id = job.id;
+    if (model.get(GRB_IntAttr_SolCount) > 0) {
+      vector<int> solution = get_best_solution_from_model(model, binary_variables);
+      string solution_str = convertToString(solution);
+      fmt::print("Found solution for instance: {}\n", instance_name);
+      attributes.solution = solution_str;
+    }
+
     storage.insert(attributes);
 
     auto& metrics = callbackState.getMetrics();
@@ -211,6 +254,25 @@ void solveAll() {
     Job job = {
       .instance_id = instance.id,
       .time_limit_s = time_limit_s,
+    };
+    solveJob(job);
+  }
+}
+
+void solveSelectedInstances() {
+  vector<Instance> instances = get_instances();
+  vector<Instance> selected_instances;
+  for (auto& instance : instances) {
+    if (instance.selected) {
+      selected_instances.push_back(instance);
+    }
+  }
+  fmt::print("Solving {} selected instances\n", selected_instances.size());
+  for (auto& instance : selected_instances) {
+    Job job = {
+      .instance_id = instance.id,
+      .time_limit_s = 10,
+      .warm_start = true,
     };
     solveJob(job);
   }

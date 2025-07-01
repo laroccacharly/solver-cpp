@@ -7,7 +7,7 @@ using namespace std;
 int main() {
     fmt::print("Starting main...\n");
     sync_db();
-    seed_instances();
-    solveAll();
+    // solveAll();
+    solveSelectedInstances();
     return 0;
 } 

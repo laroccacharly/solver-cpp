@@ -5,6 +5,7 @@
 #include <cstdint>
 #include "sqlite_orm/sqlite_orm.h"
 #include <chrono>
+#include <optional>
 
 using namespace std;
 using namespace sqlite_orm;
@@ -22,6 +23,7 @@ struct Instance {
     string id; 
     string name;
     int64_t created_at = unix_now();
+    bool selected = false;
 };
 
 // https://docs.gurobi.com/projects/optimizer/en/current/concepts/attributes/types.html#secattributetypes
@@ -35,6 +37,7 @@ struct GRBAttributes {
     int Status; 
     double ObjVal; 
     double MaxMemUsed; // GB
+    string solution;
 }; 
 
 struct CallbackMetric {
@@ -56,6 +59,7 @@ struct Job {
     string instance_id; 
     int time_limit_s = 10;
     string strategy_id = "default"; 
+    bool warm_start = false;
     int64_t created_at = unix_now();
 }; 
 
@@ -65,13 +69,15 @@ void seed_instances();
 vector<string> get_instance_names();
 vector<Instance> get_instances();
 void batch_insert_metrics(vector<CallbackMetric>& metrics, int batch_size = 1000);
+optional<vector<int>> get_best_solution_for_instance(string instance_id);
 
 inline auto get_storage() {
     return make_storage("data/db.sqlite",
         make_table("instances", 
             make_column("id", &Instance::id, primary_key()), 
             make_column("name", &Instance::name),
-            make_column("created_at", &Instance::created_at)
+            make_column("created_at", &Instance::created_at),
+            make_column("selected", &Instance::selected)
         ),
         make_table("strategies", 
             make_column("id", &Strategy::id, primary_key()),
@@ -82,6 +88,7 @@ inline auto get_storage() {
             make_column("instance_id", &Job::instance_id),
             make_column("strategy_id", &Job::strategy_id),
             make_column("time_limit_s", &Job::time_limit_s),
+            make_column("warm_start", &Job::warm_start),
             make_column("created_at", &Job::created_at)
         ),
         make_table("grb_attributes",
@@ -93,7 +100,8 @@ inline auto get_storage() {
             make_column("node_count", &GRBAttributes::NodeCount),
             make_column("status", &GRBAttributes::Status),
             make_column("obj_val", &GRBAttributes::ObjVal),
-            make_column("max_mem_used", &GRBAttributes::MaxMemUsed)
+            make_column("max_mem_used", &GRBAttributes::MaxMemUsed),
+            make_column("solution", &GRBAttributes::solution)
         ),
         make_table("callback_metrics",
             make_column("id", &CallbackMetric::id, primary_key().autoincrement()),
