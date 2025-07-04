@@ -105,6 +105,24 @@ GRBAttributes createGRBAttributes(GRBModel& model) {
   };
 }
 
+static void applyWarmStart(const string& instance_name, vector<GRBVar>& binary_variables) {
+    auto best_solution = get_best_solution_for_instance(instance_name);
+    if (!best_solution) {
+        fmt::print("No best solution found for instance, skipping warm start\n");
+        return;
+    }
+
+    // start by setting all binary variables to 0
+    for (int i = 0; i < binary_variables.size(); i++) {
+        binary_variables[i].set(GRB_DoubleAttr_Start, 0.0);
+    }
+
+    fmt::print("Found best solution for instance, applying warm start\n");
+    vector<int> solution = *best_solution;
+    for (int var_index : solution) {
+        binary_variables[var_index].set(GRB_DoubleAttr_Start, 1.0);
+    }
+}
 
 void _solveJob(Job job) {
     string instance_name = job.instance_id;
@@ -127,21 +145,7 @@ void _solveJob(Job job) {
     }
 
     if (job.warm_start) {
-      auto best_solution = get_best_solution_for_instance(instance_name);
-      if (best_solution) {
-        // start by setting all binary variables to 0
-        for (int i = 0; i < binary_variables.size(); i++) {
-          binary_variables[i].set(GRB_DoubleAttr_Start, 0.0);
-        }
-
-        fmt::print("Found best solution for instance, applying warm start\n");
-        vector<int> solution = *best_solution;
-        for (int var_index : solution) {
-          binary_variables[var_index].set(GRB_DoubleAttr_Start, 1.0);
-        }
-      } else {
-        fmt::print("No best solution found for instance, skipping warm start\n");
-      }
+        applyWarmStart(instance_name, binary_variables);
     }
 
     fmt::print("Model has {} binary variables\n", binary_variables.size());
