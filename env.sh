@@ -17,3 +17,4 @@ alias clean='rm -rf build'
 alias r="build && run -a"
 
 alias showdb="uv run show_sqlite.py"
+alias ui="uv run --with streamlit streamlit run ui.py"
