@@ -2,6 +2,7 @@
   "dependencies": [
     "fmt",
     "sqlite-orm",
-    "sqlite3"
+    "sqlite3",
+    "cxxopts"
   ]
 }
