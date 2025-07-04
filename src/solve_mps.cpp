@@ -124,6 +124,53 @@ static void applyWarmStart(const string& instance_name, vector<GRBVar>& binary_v
     }
 }
 
+vector<GRBVar> getBinaryVariables(GRBModel& model) {
+  int num_variables = model.get(GRB_IntAttr_NumVars);
+  vector<GRBVar> binary_variables;
+  for (int i = 0; i < num_variables; i++) {
+    GRBVar var = model.getVar(i);
+    if (isBinary(var)) {
+      binary_variables.push_back(var);    
+    }
+  }
+  fmt::print("Model has {} binary variables\n", binary_variables.size());
+  return binary_variables;
+}
+
+void applyLNS(GRBModel& model, Job& job) {
+    string instance_name = job.instance_id;
+    auto best_solution = get_best_solution_for_instance(instance_name);
+    if (!best_solution) {
+        fmt::print("No best solution found for instance, skipping LNS\n");
+        return;
+    }
+    // We use random LNS where we sample without replacement binary_variables (fixing_ratio * num_binary_variables) 
+    vector<int> one_indices = *best_solution;
+    vector<GRBVar> binary_variables = getBinaryVariables(model);
+    int num_binary_variables = binary_variables.size();
+    vector<int> fixing_indices = sample_percentage(num_binary_variables, job.fixing_ratio);
+
+    // build solution 
+    vector<float> solution; 
+    for (int i = 0; i < num_binary_variables; i++) {
+        solution.push_back(0.0);
+    }
+    for (int var_index : one_indices) {
+        solution[var_index] = 1.0;
+    }
+
+    // add LNS constraint 
+    GRBLinExpr lns_expression = 0;
+    for (int var_index : fixing_indices) {
+        GRBVar var = binary_variables[var_index];
+        double value = solution[var_index];
+        lns_expression += var * (1 - value); // if value is 0, we must fix var to 0
+        lns_expression += (1 - var) * value; // if value is 1, we must fix var to 1
+    }
+    model.addConstr(lns_expression == 0, "LNS");
+    fmt::print("Added LNS constraint with {} variables fixed\n", fixing_indices.size());
+}
+
 void _solveJob(Job job) {
     string instance_name = job.instance_id;
 
@@ -133,23 +180,17 @@ void _solveJob(Job job) {
     GRBModel model = GRBModel(env, path);
 
     model.set(GRB_DoubleParam_TimeLimit, job.time_limit_s);
-    // model.set(GRB_IntParam_SolutionLimit, 20);
-    int num_variables = model.get(GRB_IntAttr_NumVars);
+    // model.set(GRB_IntParam_SolutionLimit, 20);  
     
-    vector<GRBVar> binary_variables;
-    for (int i = 0; i < num_variables; i++) {
-        GRBVar var = model.getVar(i);
-        if (isBinary(var)) {
-            binary_variables.push_back(var);
-        }
-    }
+    vector<GRBVar> binary_variables = getBinaryVariables(model);
 
     if (job.warm_start) {
         applyWarmStart(instance_name, binary_variables);
     }
 
-    fmt::print("Model has {} binary variables\n", binary_variables.size());
-    fmt::print("Model has {} variables\n", num_variables);
+    if (job.enable_lns) {
+        applyLNS(model, job);
+    }
 
     CallbackState callbackState(
       binary_variables.data(), 
@@ -214,17 +255,19 @@ void solveAll() {
 void solveSelectedInstances() {
   vector<Instance> instances = get_instances();
   vector<Instance> selected_instances;
-  for (auto& instance : instances) {
+  for (Instance& instance : instances) {
     if (instance.selected) {
       selected_instances.push_back(instance);
     }
   }
   fmt::print("Solving {} selected instances\n", selected_instances.size());
-  for (auto& instance : selected_instances) {
+  for (Instance& instance : selected_instances) {
     Job job = {
       .instance_id = instance.id,
       .time_limit_s = 10,
       .warm_start = true,
+      .enable_lns = true,
+      .fixing_ratio = 0.20,
     };
     solveJob(job);
   }
