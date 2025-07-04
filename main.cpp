@@ -16,7 +16,8 @@ struct Action {
 vector<Action> get_actions() {
     return {
         Action{"syncdb", []() { sync_db(); return 0; }},
-        Action{"solveall", []() { solveAll(); return 0; }},
+        Action{"seed", []() { seed_instances(); return 0; }},
+        Action{"grb_only", []() { solveGRBOnly(); return 0; }},
     };
 }
 

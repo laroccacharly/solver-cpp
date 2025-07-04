@@ -235,11 +235,9 @@ void solveJob(Job job) {
     }
 }
 
-void solveAll() { 
+void solveGRBOnly() { 
   vector<Instance> instances = get_instances();
   int time_limit_s = 60;
-  // int max_jobs = 3; 
-  // instances.resize(max_jobs);
   int instance_count = instances.size();
   for (int i = 0; i < instance_count; i++) {
     fmt::print("Solving instance {}/{}\n", i + 1, instance_count);
@@ -247,6 +245,7 @@ void solveAll() {
     Job job = {
       .instance_id = instance.id,
       .time_limit_s = time_limit_s,
+      .group_name = "grb_only",
     };
     solveJob(job);
   }

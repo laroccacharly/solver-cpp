@@ -15,3 +15,5 @@ alias run='./build/$PROJECT_NAME'
 alias brun="build && run"
 alias clean='rm -rf build'
 alias r="build && run -a"
+
+alias showdb="uv run show_sqlite.py"

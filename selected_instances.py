@@ -34,6 +34,7 @@ def set_selected_instances():
                 j.*,
                 ROW_NUMBER() OVER (PARTITION BY j.instance_id ORDER BY j.created_at DESC) as rn
             FROM jobs j
+            WHERE j.group_name = 'grb_only'
         )
         WHERE rn = 1
     )

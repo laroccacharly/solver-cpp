@@ -49,16 +49,11 @@ struct CallbackMetric {
     int64_t elapsed_ms;
 };
 
-struct Strategy {
-    string id = "default"; 
-    int64_t created_at;
-}; 
-
 struct Job { 
     int id; 
     string instance_id; 
     int time_limit_s = 10;
-    string strategy_id = "default"; 
+    string group_name = ""; 
     bool warm_start = false;
     bool enable_lns = false;
     float fixing_ratio = 0.20; // 20% of the variables are fixed
@@ -80,15 +75,11 @@ inline auto get_storage() {
             make_column("name", &Instance::name),
             make_column("created_at", &Instance::created_at),
             make_column("selected", &Instance::selected)
-        ),
-        make_table("strategies", 
-            make_column("id", &Strategy::id, primary_key()),
-            make_column("created_at", &Strategy::created_at)
-        ),
+        ),  
         make_table("jobs", 
             make_column("id", &Job::id, primary_key().autoincrement()),
             make_column("instance_id", &Job::instance_id),
-            make_column("strategy_id", &Job::strategy_id),
+            make_column("group_name", &Job::group_name),
             make_column("time_limit_s", &Job::time_limit_s),
             make_column("warm_start", &Job::warm_start),
             make_column("enable_lns", &Job::enable_lns),
