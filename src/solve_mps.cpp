@@ -2,35 +2,16 @@
 
 #include "solve_mps.h"
 #include "db.h" 
+#include "utils.h"
 
 #include "gurobi_c++.h"
 #include "fmt/core.h"
-#include "fmt/ranges.h"
 #include <string>
 #include <chrono>
 #include <fstream>
 #include <cstdlib>
 
 using namespace std;
-
-
-bool isBinary(GRBVar& var) {
-    char vtype = var.get(GRB_CharAttr_VType);
-    
-    if (vtype == 'B') {
-        return true;
-    }
-    
-    if (vtype == 'I') {
-        double lb = var.get(GRB_DoubleAttr_LB);
-        double ub = var.get(GRB_DoubleAttr_UB);
-        if (lb == 0.0 && ub == 1.0) {
-            return true;
-        }
-    }
-    
-    return false;
-}
 
 class CallbackState: public GRBCallback
 {
@@ -111,14 +92,6 @@ class CallbackState: public GRBCallback
     }
 };
 
-string getMpsDir() {
-    const char* mps_files_dir = getenv("MPS_FILES_DIR");
-    if (mps_files_dir == nullptr) {
-        fmt::print("Error: The environment variable MPS_FILES_DIR is not set.\n");
-        return "";
-    }
-    return string(mps_files_dir);
-}
 
 GRBAttributes createGRBAttributes(GRBModel& model) {
   return GRBAttributes{
@@ -132,22 +105,6 @@ GRBAttributes createGRBAttributes(GRBModel& model) {
   };
 }
 
-// A solution is a vector of indices for the non zero variables 
-vector<int> get_best_solution_from_model(GRBModel& model, vector<GRBVar>& binary_variables, double tolerance = 0.001) {
-  vector<int> solution;
-  for (int i = 0; i < binary_variables.size(); i++) {
-    GRBVar var = binary_variables[i];
-    double value = var.get(GRB_DoubleAttr_X);
-    if (value > tolerance) {
-      solution.push_back(i);
-    }
-  } 
-  return solution;
-}
-
-string convertToString(vector<int>& solution) {
-  return fmt::format("{}", fmt::join(solution, ","));
-}
 
 void _solveJob(Job job) {
     string instance_name = job.instance_id;
@@ -211,7 +168,7 @@ void _solveJob(Job job) {
     attributes.job_id = job.id;
     if (model.get(GRB_IntAttr_SolCount) > 0) {
       vector<int> solution = get_best_solution_from_model(model, binary_variables);
-      string solution_str = convertToString(solution);
+      string solution_str = convertVectorToString(solution);
       fmt::print("Found solution for instance: {}\n", instance_name);
       attributes.solution = solution_str;
     }
@@ -231,15 +188,6 @@ void solveJob(Job job) {
     } catch (GRBException e) {
         fmt::print("Error: {}\n", e.getMessage());
     }
-}
-
-void solveOneMps() {
-  vector<Instance> instances = get_instances();
-  Instance instance = instances[0];
-  Job job = {
-    .instance_id = instance.id,
-  };
-  solveJob(job);
 }
 
 void solveAll() { 
