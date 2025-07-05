@@ -1,13 +1,27 @@
-# /// script
-# requires-python = ">=3.12"
-# dependencies = [
-#     "pandas",
-# ]
-# ///
 import streamlit as st
 import pandas as pd
 import sqlite3
+from typing import Callable
+# --- 
+from pysolver import get_instance_selection_df
+from pydantic import BaseModel
 
+class Page(BaseModel): 
+    name: str
+    function: Callable
+
+def get_pages() -> list[Page]: 
+    return [
+        Page(name="Home", function=home_page),
+        Page(name="Tables", function=tables_page),
+        Page(name="Instance Selection", function=instance_selection_page),
+    ]
+
+def instance_selection_page(): 
+    st.title("Instance Selection")
+    df = get_instance_selection_df()
+    st.dataframe(df)
+    
 def tables_page(): 
     st.title("Database Tables")
 
@@ -33,13 +47,15 @@ def home_page():
 
 
 def main_ui(): 
+    pages = get_pages()
+
     st.set_page_config(page_title="Solver", page_icon=":robot:", layout="wide")
     st.sidebar.title("Navigation")
-    page = st.sidebar.selectbox("Select a page", ["Home", "Tables"], index=0)
-    if page == "Home":
-        home_page()
-    elif page == "Tables":
-        tables_page()
+    selected_page_name = st.sidebar.selectbox("Select a page", [p.name for p in pages], index=0)
+    
+    # Find the page object that matches the selected name
+    selected_page = next(p for p in pages if p.name == selected_page_name)
+    selected_page.function()
 
 if __name__ == "__main__":
     main_ui()

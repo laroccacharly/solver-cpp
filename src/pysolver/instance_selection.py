@@ -1,17 +1,42 @@
-# /// script
-# requires-python = ">=3.12"
-# dependencies = [
-#     "pandas",
-# ]
-# ///
-
 import sqlite3
 import pandas as pd
+from .connection import get_connection, close_connection
 
-def get_sqlite_path() -> str: 
-    return "data/db.sqlite"
+def get_instance_selection_query() -> str: 
+    return """
+    WITH latest_jobs AS (
+            SELECT
+                instance_id,
+                id as job_id
+            FROM (
+                SELECT
+                    j.*,
+                    ROW_NUMBER() OVER (PARTITION BY j.instance_id ORDER BY j.created_at DESC) as rn
+                FROM jobs j
+                WHERE j.group_name = 'grb_only'
+            )
+            WHERE rn = 1
+        )
+        SELECT
+            lj.instance_id,
+            g.runtime,
+            g.mip_gap,
+            g.solution
+        FROM latest_jobs lj
+        JOIN grb_attributes g ON lj.job_id = g.job_id
+        WHERE g.mip_gap > 0.05 AND g.mip_gap < 10 AND g.solution IS NOT NULL AND g.solution != ''
+    """
 
-def make_instance_selection():
+def query_to_df(query: str) -> pd.DataFrame: 
+    con = get_connection()
+    df = pd.read_sql_query(query, con)
+    close_connection()
+    return df
+
+def get_instance_selection_df() -> pd.DataFrame: 
+    return query_to_df(get_instance_selection_query())
+
+def _make_instance_selection():
     """
     An instance is selected if it has a mip_gap above 0.05 and below 10.
     We set the bool selected to true for these instances.
@@ -65,6 +90,3 @@ def make_instance_selection():
     con.commit()
     con.close()
 
-
-if __name__ == "__main__":
-    make_instance_selection() 
