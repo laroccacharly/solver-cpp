@@ -4,3 +4,4 @@ build/
 *.csv
 .DS_Store
 data/db.sqlite
+*.egg-info/
