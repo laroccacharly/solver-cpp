@@ -11,7 +11,7 @@ import pandas as pd
 def get_sqlite_path() -> str: 
     return "data/db.sqlite"
 
-def set_selected_instances():
+def make_instance_selection():
     """
     An instance is selected if it has a mip_gap above 0.05 and below 10.
     We set the bool selected to true for these instances.
@@ -42,7 +42,7 @@ def set_selected_instances():
         lj.instance_id
     FROM latest_jobs lj
     JOIN grb_attributes g ON lj.job_id = g.job_id
-    WHERE g.mip_gap > 0.05 AND g.mip_gap < 10
+    WHERE g.mip_gap > 0.05 AND g.mip_gap < 10 AND g.solution IS NOT NULL AND g.solution != ''
     """
 
     cursor.execute(query)
@@ -67,4 +67,4 @@ def set_selected_instances():
 
 
 if __name__ == "__main__":
-    set_selected_instances() 
+    make_instance_selection() 
