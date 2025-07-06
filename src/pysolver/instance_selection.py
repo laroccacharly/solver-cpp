@@ -21,7 +21,6 @@ def instance_selection_ui():
     st.dataframe(selected_df)
 
 def get_instance_selection_base_query() -> str:
-    """Get the base query without the final WHERE clause filtering"""
     return """
     WITH latest_jobs AS (
             SELECT
@@ -51,9 +50,7 @@ def get_instance_selection_query() -> str:
     base_query = get_instance_selection_base_query()
     return base_query + "\n WHERE g.mip_gap > 0.05 AND g.mip_gap < 10 AND g.solution IS NOT NULL AND g.solution != ''"
 
-
 def get_instance_selection_base_df() -> pd.DataFrame:
-    """Get dataframe before applying the final WHERE clause"""
     return query_to_df(get_instance_selection_base_query())
 
 def get_instance_selection_df() -> pd.DataFrame: 
