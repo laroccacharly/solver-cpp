@@ -44,6 +44,11 @@ inline vector<int> sample_percentage(int n, double percentage) {
     return sample_percentage(n, percentage, rng);
 }
 
+inline vector<int> sample_percentage(int n, double percentage, int seed) {
+    mt19937 rng(seed);
+    return sample_percentage(n, percentage, rng);
+}
+
 // A solution is a vector of indices for the non zero variables 
 inline vector<int> get_best_solution_from_model(GRBModel& model, vector<GRBVar>& binary_variables, double tolerance = 0.001) {
     vector<int> solution;
