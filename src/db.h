@@ -62,6 +62,7 @@ struct Job {
     string group_name = ""; 
     bool warm_start = false;
     bool enable_lns = false;
+    int seed = 0;
     float fixing_ratio = 0.20; // 20% of the variables are fixed
     int64_t created_at = unix_now();
 }; 
@@ -93,6 +94,7 @@ inline auto get_storage() {
             make_column("warm_start", &Job::warm_start),
             make_column("enable_lns", &Job::enable_lns),
             make_column("fixing_ratio", &Job::fixing_ratio),
+            make_column("seed", &Job::seed),
             make_column("created_at", &Job::created_at)
         ),
         make_table("grb_attributes",
