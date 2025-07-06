@@ -222,14 +222,13 @@ void solveJob(Job job) {
 
 void solveGRBOnly() { 
   vector<Instance> instances = get_instances();
-  int time_limit_s = 60;
   int instance_count = instances.size();
   for (int i = 0; i < instance_count; i++) {
     fmt::print("Solving instance {}/{}\n", i + 1, instance_count);
     Instance instance = instances[i];
     Job job = {
       .instance_id = instance.id,
-      .time_limit_s = time_limit_s,
+      .time_limit_s = 10,
       .group_name = "grb_only",
     };
     solveJob(job);
@@ -257,7 +256,7 @@ void solveLNS() {
   // create 9 sets of jobs with different combinations of fixing_ratio and seed
   vector<float> fixing_ratios = {0.2, 0.5, 0.8};
   vector<int> seeds = {0, 1, 2};
-  
+
   for (float fixing_ratio : fixing_ratios) {
     for (int seed : seeds) {
       for (Instance& instance : instances) {
