@@ -12,9 +12,8 @@ class Page(BaseModel):
 
 def get_pages() -> list[Page]: 
     return [
-        Page(name="Home", function=home_page),
-        Page(name="Tables", function=tables_page),
         Page(name="Instance Selection", function=instance_selection_page),
+        Page(name="Tables", function=tables_page),
     ]
 
 def instance_selection_page(): 
