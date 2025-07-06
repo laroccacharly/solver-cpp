@@ -1,11 +1,17 @@
 import pandas as pd
-from .connection import get_connection, close_connection
+from .connection import get_connection, close_connection, query_to_df
 import streamlit as st
 
 def instance_selection_ui(): 
-    st.title("Instance Selection")
-    df = get_instance_selection_df()
-    st.dataframe(df)
+    st.subheader("Instances before filtering")
+    before_filter_df = get_instance_selection_base_df()
+    st.dataframe(before_filter_df)
+    st.write(f"Total instances before filtering: {len(before_filter_df)}")
+    
+    st.subheader("Instances after filtering (mips gap > 0.05 and < 10)")
+    after_filter_df = get_instance_selection_df()
+    st.dataframe(after_filter_df)
+    st.write(f"Total instances after filtering: {len(after_filter_df)}")
 
     if st.button("Make Selection"):
         make_instance_selection()
@@ -14,7 +20,8 @@ def instance_selection_ui():
     selected_df = get_selected_instances_df()
     st.dataframe(selected_df)
 
-def get_instance_selection_query() -> str: 
+def get_instance_selection_base_query() -> str:
+    """Get the base query without the final WHERE clause filtering"""
     return """
     WITH latest_jobs AS (
             SELECT
@@ -38,14 +45,16 @@ def get_instance_selection_query() -> str:
         FROM latest_jobs lj
         JOIN grb_attributes g ON lj.job_id = g.job_id
         JOIN instances i ON lj.instance_id = i.id
-        WHERE g.mip_gap > 0.05 AND g.mip_gap < 10 AND g.solution IS NOT NULL AND g.solution != ''
     """
 
-def query_to_df(query: str) -> pd.DataFrame: 
-    con = get_connection()
-    df = pd.read_sql_query(query, con)
-    close_connection()
-    return df
+def get_instance_selection_query() -> str: 
+    base_query = get_instance_selection_base_query()
+    return base_query + "\n WHERE g.mip_gap > 0.05 AND g.mip_gap < 10 AND g.solution IS NOT NULL AND g.solution != ''"
+
+
+def get_instance_selection_base_df() -> pd.DataFrame:
+    """Get dataframe before applying the final WHERE clause"""
+    return query_to_df(get_instance_selection_base_query())
 
 def get_instance_selection_df() -> pd.DataFrame: 
     return query_to_df(get_instance_selection_query())
