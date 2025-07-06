@@ -19,6 +19,7 @@ vector<Action> get_actions() {
         Action{"seed", []() { seed_instances(); return 0; }},
         Action{"grb_only", []() { solveGRBOnly(); return 0; }},
         Action{"warm_start", []() { solveWarmStart(); return 0; }},
+        Action{"lns", []() { solveLNS(); return 0; }},
     };
 }
 
