@@ -167,7 +167,7 @@ void _solveJob(Job job) {
     GRBModel model = loadModel(instance_name);
     model.set(GRB_DoubleParam_TimeLimit, job.time_limit_s);
     model.set(GRB_IntParam_Seed, job.seed);
-    
+
     vector<GRBVar> binary_variables = getBinaryVariables(model);
 
     if (job.warm_start) {
@@ -239,13 +239,24 @@ void solveGRBOnly() {
 void solveWarmStart() {
   fmt::print("Running job group: warm_start\n");
   vector<Instance> instances = get_selected_instances();
-  for (Instance& instance : instances) {
-    Job job = {
-      .instance_id = instance.id,
-      .time_limit_s = 10,
-      .warm_start = true,
-      .group_name = "warm_start",
-    };
+
+  vector<Job> jobs;
+  vector<int> seeds = {0, 1, 2};
+  string group_name = "warm_start";
+  
+  for (int seed : seeds) {
+    for (Instance& instance : instances) {
+      Job job = {
+        .instance_id = instance.id,
+        .time_limit_s = 10,
+        .warm_start = true,
+        .group_name = group_name,
+        .seed = seed,
+      };
+      jobs.push_back(job);
+    }
+  }
+  for (Job& job : jobs) {
     solveJob(job);
   }
 }
