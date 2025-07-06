@@ -265,7 +265,7 @@ void solveLNS() {
   fmt::print("Running job group: lns\n");
   vector<Instance> instances = get_selected_instances();
   vector<Job> jobs;
-  vector<float> fixing_ratios = {0.2, 0.5, 0.8};
+  vector<float> fixing_ratios = {0.05, 0.1, 0.2, 0.5, 0.8};
   vector<int> seeds = {0, 1, 2};
   string group_name; 
   for (float fixing_ratio : fixing_ratios) {
