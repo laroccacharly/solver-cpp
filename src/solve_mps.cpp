@@ -251,9 +251,32 @@ void solveWarmStart() {
 }
 
 void solveLNS() {
+  fmt::print("Running job group: lns\n");
   vector<Instance> instances = get_selected_instances();
   vector<Job> jobs;
-
+  // create 9 sets of jobs with different combinations of fixing_ratio and seed
+  vector<float> fixing_ratios = {0.2, 0.5, 0.8};
+  vector<int> seeds = {0, 1, 2};
+  
+  for (float fixing_ratio : fixing_ratios) {
+    for (int seed : seeds) {
+      for (Instance& instance : instances) {
+        Job job = {
+          .instance_id = instance.id,
+          .time_limit_s = 10,
+          .warm_start = true,
+          .enable_lns = true,
+          .fixing_ratio = fixing_ratio,
+          .seed = seed,
+        };
+        jobs.push_back(job);
+      }
+    }
+  }
+  fmt::print("Solving {} jobs\n", jobs.size());
+  for (Job& job : jobs) {
+    solveJob(job);
+  }
 }
 
 void solveSelectedInstances() {
