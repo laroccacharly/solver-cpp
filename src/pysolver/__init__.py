@@ -1,2 +1,2 @@
-from .instance_selection import get_instance_selection_df
+from .instance_selection import make_instance_selection
 from .pages import get_pages

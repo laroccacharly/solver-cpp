@@ -1,0 +1,3 @@
+from pysolver import make_instance_selection
+
+make_instance_selection()

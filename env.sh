@@ -20,3 +20,4 @@ alias r="build && run -a"
 # python scripts 
 alias showdb="uv run show_sqlite.py"
 alias ui="uv run streamlit run ui.py"
+alias select="uv run select_instances.py"
