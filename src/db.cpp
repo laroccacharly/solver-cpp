@@ -69,13 +69,13 @@ void batch_insert_metrics(vector<CallbackMetric>& metrics, int batch_size) {
     }
 }
 
-optional<vector<int>> get_best_solution_for_instance(string instance_id) {
+optional<vector<int>> get_best_solution_for_instance_from_db(string instance_id) {
     auto storage = get_storage();
     
     auto results = storage.select(
         object<GRBAttributes>(),
         join<Job>(on(c(&GRBAttributes::job_id) == &Job::id)),
-        where(c(&Job::instance_id) == instance_id and c(&GRBAttributes::solution) != ""),
+        where(c(&Job::instance_id) == instance_id and c(&GRBAttributes::solution) != "" and c(&Job::group_name) == "grb_only"),
         order_by(&GRBAttributes::ObjVal).asc(),
         limit(1)
     );

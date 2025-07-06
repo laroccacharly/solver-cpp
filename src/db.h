@@ -76,7 +76,7 @@ vector<string> get_instance_names();
 vector<Instance> get_instances();
 vector<Instance> get_selected_instances();
 void batch_insert_metrics(vector<CallbackMetric>& metrics, int batch_size = 1000);
-optional<vector<int>> get_best_solution_for_instance(string instance_id);
+optional<vector<int>> get_best_solution_for_instance_from_db(string instance_id);
 
 inline auto get_storage() {
     return make_storage("data/db.sqlite",

@@ -110,7 +110,7 @@ GRBAttributes createGRBAttributes(GRBModel& model) {
 }
 
 static void applyWarmStart(const string& instance_name, vector<GRBVar>& binary_variables) {
-    auto best_solution = get_best_solution_for_instance(instance_name);
+    auto best_solution = get_best_solution_for_instance_from_db(instance_name);
     if (!best_solution) {
         fmt::print("No best solution found for instance, skipping warm start\n");
         return;
@@ -130,7 +130,7 @@ static void applyWarmStart(const string& instance_name, vector<GRBVar>& binary_v
 
 void applyLNS(GRBModel& model, Job& job) {
     string instance_name = job.instance_id;
-    auto best_solution = get_best_solution_for_instance(instance_name);
+    auto best_solution = get_best_solution_for_instance_from_db(instance_name);
     if (!best_solution) {
         fmt::print("No best solution found for instance, skipping LNS\n");
         return;
