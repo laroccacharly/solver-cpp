@@ -139,7 +139,7 @@ void applyLNS(GRBModel& model, Job& job) {
     vector<int> one_indices = *best_solution;
     vector<GRBVar> binary_variables = getBinaryVariables(model);
     int num_binary_variables = binary_variables.size();
-    vector<int> fixing_indices = sample_percentage(num_binary_variables, job.fixing_ratio);
+    vector<int> fixing_indices = sample_percentage(num_binary_variables, job.fixing_ratio, job.seed);
 
     // build solution 
     vector<float> solution; 
@@ -248,6 +248,12 @@ void solveWarmStart() {
     };
     solveJob(job);
   }
+}
+
+void solveLNS() {
+  vector<Instance> instances = get_selected_instances();
+  vector<Job> jobs;
+
 }
 
 void solveSelectedInstances() {
