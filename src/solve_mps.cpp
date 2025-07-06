@@ -166,6 +166,7 @@ void _solveJob(Job job) {
     string instance_name = job.instance_id;
     GRBModel model = loadModel(instance_name);
     model.set(GRB_DoubleParam_TimeLimit, job.time_limit_s);
+    model.set(GRB_IntParam_Seed, job.seed);
     
     vector<GRBVar> binary_variables = getBinaryVariables(model);
 
