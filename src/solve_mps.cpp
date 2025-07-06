@@ -236,6 +236,20 @@ void solveGRBOnly() {
   }
 }
 
+void solveWarmStart() {
+  fmt::print("Running job group: warm_start\n");
+  vector<Instance> instances = get_selected_instances();
+  for (Instance& instance : instances) {
+    Job job = {
+      .instance_id = instance.id,
+      .time_limit_s = 10,
+      .warm_start = true,
+      .group_name = "warm_start",
+    };
+    solveJob(job);
+  }
+}
+
 void solveSelectedInstances() {
   vector<Instance> instances = get_instances();
   vector<Instance> selected_instances;

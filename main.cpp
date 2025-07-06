@@ -18,6 +18,7 @@ vector<Action> get_actions() {
         Action{"syncdb", []() { sync_db(); return 0; }},
         Action{"seed", []() { seed_instances(); return 0; }},
         Action{"grb_only", []() { solveGRBOnly(); return 0; }},
+        Action{"warm_start", []() { solveWarmStart(); return 0; }},
     };
 }
 

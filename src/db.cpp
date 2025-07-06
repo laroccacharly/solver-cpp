@@ -32,6 +32,11 @@ vector<Instance> get_instances() {
     return storage.get_all<Instance>();
 }
 
+vector<Instance> get_selected_instances() {
+    auto storage = get_storage();
+    return storage.get_all<Instance>(where(c(&Instance::selected) == true));
+}
+
 void seed_instances() {
     vector<string> instance_names = get_instance_names();
     auto storage = get_storage();
