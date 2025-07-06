@@ -2,6 +2,7 @@ import pandas as pd
 from .connection import get_connection, close_connection, query_to_df
 import streamlit as st
 from .set_best_obj_val import set_best_obj_val
+from .set_primal_gap import set_primal_gap
 
 def instance_selection_ui(): 
     st.subheader("Instances before filtering")
@@ -18,6 +19,8 @@ def instance_selection_ui():
         make_instance_selection()
     if st.button("Set Best Obj Val"):
         set_best_obj_val()
+    if st.button("Set Primal Gap"):
+        set_primal_gap()
 
     st.subheader("Selected Instances")
     selected_df = get_selected_instances_df()
