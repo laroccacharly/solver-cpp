@@ -4,6 +4,8 @@
 #include "sqlite_orm/sqlite_orm.h"
 #include <algorithm>
 #include <sstream>
+#include "load_model.h"
+#include "binary_variables.h"
 
 using namespace std;
 using namespace sqlite_orm;
@@ -34,7 +36,19 @@ void seed_instances() {
     vector<string> instance_names = get_instance_names();
     auto storage = get_storage();
     for (string name : instance_names) {
-        Instance instance = {name, name};
+        GRBModel model = loadModel(name);
+        vector<GRBVar> binary_variables = getBinaryVariables(model);
+        int num_bin_variables = binary_variables.size();
+        if (num_bin_variables == 0) {
+            fmt::print("Instance {} has no binary variables, skipping\n", name);
+            continue;
+        }
+        Instance instance = {
+            .id = name, 
+            .name = name, 
+            .num_bin_variables = num_bin_variables, 
+            .num_int_variables = model.get(GRB_IntAttr_NumVars)
+        };
         storage.replace(instance);
     }
     vector<Instance> instances = get_instances();

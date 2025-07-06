@@ -24,6 +24,8 @@ struct Instance {
     string name;
     int64_t created_at = unix_now();
     bool selected = false;
+    int num_bin_variables;
+    int num_int_variables; 
 };
 
 // https://docs.gurobi.com/projects/optimizer/en/current/concepts/attributes/types.html#secattributetypes
@@ -37,6 +39,10 @@ struct GRBAttributes {
     int Status; 
     double ObjVal; 
     double MaxMemUsed; // GB
+    int NumVars;
+    int NumConstrs;
+    int NumBinVars;
+    int NumIntVars;
     string solution;
 }; 
 
@@ -74,7 +80,9 @@ inline auto get_storage() {
             make_column("id", &Instance::id, primary_key()), 
             make_column("name", &Instance::name),
             make_column("created_at", &Instance::created_at),
-            make_column("selected", &Instance::selected)
+            make_column("selected", &Instance::selected),
+            make_column("num_bin_variables", &Instance::num_bin_variables),
+            make_column("num_int_variables", &Instance::num_int_variables)
         ),  
         make_table("jobs", 
             make_column("id", &Job::id, primary_key().autoincrement()),

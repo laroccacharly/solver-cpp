@@ -9,35 +9,9 @@
 using namespace std;
 using namespace fmt;
 
-inline string getMpsDir() {
-    const char* mps_files_dir = getenv("MPS_FILES_DIR");
-    if (mps_files_dir == nullptr) {
-        fmt::print("Error: The environment variable MPS_FILES_DIR is not set.\n");
-        return "";
-    }
-    return string(mps_files_dir);
-}
 
 inline string convertVectorToString(vector<int>& solution) {
     return format("{}", join(solution, ","));
-}
-
-inline bool isBinary(GRBVar& var) {
-    char vtype = var.get(GRB_CharAttr_VType);
-    
-    if (vtype == 'B') {
-        return true;
-    }
-    
-    if (vtype == 'I') {
-        double lb = var.get(GRB_DoubleAttr_LB);
-        double ub = var.get(GRB_DoubleAttr_UB);
-        if (lb == 0.0 && ub == 1.0) {
-            return true;
-        }
-    }
-    
-    return false;
 }
 
 // Sample without replacement from the set {0, 1, ..., n-1}

@@ -1,8 +1,8 @@
-// Solves an MPS file using Gurobi. 
-
 #include "solve_mps.h"
 #include "db.h" 
 #include "utils.h"
+#include "load_model.h"
+#include "binary_variables.h"
 
 #include "gurobi_c++.h"
 #include "fmt/core.h"
@@ -101,7 +101,11 @@ GRBAttributes createGRBAttributes(GRBModel& model) {
     .NodeCount = model.get(GRB_DoubleAttr_NodeCount), 
     .Status = model.get(GRB_IntAttr_Status),
     .ObjVal = model.get(GRB_DoubleAttr_ObjVal),
-    .MaxMemUsed = model.get(GRB_DoubleAttr_MaxMemUsed)
+    .MaxMemUsed = model.get(GRB_DoubleAttr_MaxMemUsed),
+    .NumVars = model.get(GRB_IntAttr_NumVars),
+    .NumConstrs = model.get(GRB_IntAttr_NumConstrs),
+    .NumBinVars = model.get(GRB_IntAttr_NumBinVars),
+    .NumIntVars = model.get(GRB_IntAttr_NumIntVars),
   };
 }
 
@@ -122,19 +126,6 @@ static void applyWarmStart(const string& instance_name, vector<GRBVar>& binary_v
     for (int var_index : solution) {
         binary_variables[var_index].set(GRB_DoubleAttr_Start, 1.0);
     }
-}
-
-vector<GRBVar> getBinaryVariables(GRBModel& model) {
-  int num_variables = model.get(GRB_IntAttr_NumVars);
-  vector<GRBVar> binary_variables;
-  for (int i = 0; i < num_variables; i++) {
-    GRBVar var = model.getVar(i);
-    if (isBinary(var)) {
-      binary_variables.push_back(var);    
-    }
-  }
-  fmt::print("Model has {} binary variables\n", binary_variables.size());
-  return binary_variables;
 }
 
 void applyLNS(GRBModel& model, Job& job) {
@@ -173,14 +164,8 @@ void applyLNS(GRBModel& model, Job& job) {
 
 void _solveJob(Job job) {
     string instance_name = job.instance_id;
-
-    string path = fmt::format("{}/{}.mps", getMpsDir(), instance_name);
-    fmt::print("Solving instance: {}\n", path);
-    GRBEnv env = GRBEnv();
-    GRBModel model = GRBModel(env, path);
-
+    GRBModel model = loadModel(instance_name);
     model.set(GRB_DoubleParam_TimeLimit, job.time_limit_s);
-    // model.set(GRB_IntParam_SolutionLimit, 20);  
     
     vector<GRBVar> binary_variables = getBinaryVariables(model);
 
