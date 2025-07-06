@@ -1,6 +1,18 @@
-import sqlite3
 import pandas as pd
 from .connection import get_connection, close_connection
+import streamlit as st
+
+def instance_selection_ui(): 
+    st.title("Instance Selection")
+    df = get_instance_selection_df()
+    st.dataframe(df)
+
+    if st.button("Make Selection"):
+        make_instance_selection()
+
+    st.subheader("Selected Instances")
+    selected_df = get_selected_instances_df()
+    st.dataframe(selected_df)
 
 def get_instance_selection_query() -> str: 
     return """
