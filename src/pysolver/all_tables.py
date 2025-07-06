@@ -10,7 +10,11 @@ def all_tables_ui():
     tables = cursor.fetchall()
 
     for table in tables:
-        st.subheader(f"Table: {table[0]}")
+        # Get row count for the table
+        cursor.execute(f"SELECT COUNT(*) FROM {table[0]}")
+        row_count = cursor.fetchone()[0]
+        
+        st.subheader(f"Table: {table[0]} ({row_count} rows)")
         df = pd.read_sql_query(f"SELECT * FROM {table[0]} LIMIT 1000", con)
         st.dataframe(df)    
 
