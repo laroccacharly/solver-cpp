@@ -10,4 +10,5 @@ def run_sql_ui():
         cursor.execute(sql)
         results = cursor.fetchall()
         st.dataframe(results)
+        con.commit()
         close_connection()
