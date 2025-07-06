@@ -21,9 +21,11 @@ def get_instance_selection_query() -> str:
             lj.instance_id,
             g.runtime,
             g.mip_gap,
+            i.num_bin_variables,
             g.solution
         FROM latest_jobs lj
         JOIN grb_attributes g ON lj.job_id = g.job_id
+        JOIN instances i ON lj.instance_id = i.id
         WHERE g.mip_gap > 0.05 AND g.mip_gap < 10 AND g.solution IS NOT NULL AND g.solution != ''
     """
 
