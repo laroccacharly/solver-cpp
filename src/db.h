@@ -26,6 +26,7 @@ struct Instance {
     bool selected = false;
     int num_bin_variables;
     int num_int_variables; 
+    float best_known_obj_val = 1e10;
 };
 
 // https://docs.gurobi.com/projects/optimizer/en/current/concepts/attributes/types.html#secattributetypes
@@ -33,6 +34,7 @@ struct GRBAttributes {
     int id = -1; 
     int job_id = -1;
     double MIPGap; 
+    double PrimalGap = -1.0;
     double Runtime; 
     int SolCount;
     double NodeCount; 
@@ -84,7 +86,8 @@ inline auto get_storage() {
             make_column("created_at", &Instance::created_at),
             make_column("selected", &Instance::selected),
             make_column("num_bin_variables", &Instance::num_bin_variables),
-            make_column("num_int_variables", &Instance::num_int_variables)
+            make_column("num_int_variables", &Instance::num_int_variables),
+            make_column("best_known_obj_val", &Instance::best_known_obj_val)
         ),  
         make_table("jobs", 
             make_column("id", &Job::id, primary_key().autoincrement()),
@@ -101,6 +104,7 @@ inline auto get_storage() {
             make_column("id", &GRBAttributes::id, primary_key().autoincrement()),
             make_column("job_id", &GRBAttributes::job_id),
             make_column("mip_gap", &GRBAttributes::MIPGap),
+            make_column("primal_gap", &GRBAttributes::PrimalGap),
             make_column("runtime", &GRBAttributes::Runtime),
             make_column("sol_count", &GRBAttributes::SolCount),
             make_column("node_count", &GRBAttributes::NodeCount),
