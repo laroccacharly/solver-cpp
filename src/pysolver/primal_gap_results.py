@@ -1,5 +1,6 @@
 import streamlit as st
-from .connection import query_to_df
+from .connection import query_with_duckdb
+import pandas as pd
 
 def primal_gap_results_ui(): 
     """
@@ -14,7 +15,26 @@ def primal_gap_results_ui():
             - max_primal_gap: the maximum primal gap for the group
             - wins: the number of times that group holds the best objective value for that instance
     """
-    query = """
+    
+    summary_query = """
+        SELECT
+            j.group_name,
+            COUNT(ga.primal_gap) AS sample_size,
+            AVG(ga.primal_gap) AS avg_primal_gap,
+            MAX(ga.primal_gap) AS max_primal_gap,
+            STDDEV_SAMP(ga.primal_gap) AS std_dev_primal_gap,
+            QUANTILE_CONT(ga.primal_gap, 0.25) AS "25th_percentile",
+            QUANTILE_CONT(ga.primal_gap, 0.50) AS "median",
+            QUANTILE_CONT(ga.primal_gap, 0.75) AS "75th_percentile"
+        FROM grb_attributes ga
+        JOIN jobs j ON ga.job_id = j.id
+        JOIN instances i ON j.instance_id = i.id
+        WHERE i.selected = 1 AND ga.primal_gap IS NOT NULL
+        GROUP BY j.group_name
+    """
+    summary_results_df = query_with_duckdb(summary_query)
+
+    wins_query = """
         WITH best_instance_obj_val AS (
             SELECT
                 j.instance_id,
@@ -41,21 +61,17 @@ def primal_gap_results_ui():
             FROM instance_winners
             GROUP BY group_name
         )
-        SELECT 
-            j.group_name, 
-            count(ga.primal_gap) as sample_size,
-            avg(ga.primal_gap) as avg_primal_gap,
-            max(ga.primal_gap) as max_primal_gap,
-            COALESCE(gw.wins, 0) as wins
-        FROM grb_attributes ga
-        JOIN jobs j on ga.job_id = j.id
-        JOIN instances i on j.instance_id = i.id
-        LEFT JOIN group_wins gw ON j.group_name = gw.group_name
-        WHERE i.selected = 1
-        GROUP BY j.group_name
-        ORDER BY wins DESC
+        SELECT * FROM group_wins
     """
-    df = query_to_df(query)
+    wins_df = query_with_duckdb(wins_query)
+    summary_results_df = pd.merge(summary_results_df, wins_df, on='group_name', how='left')
+
+    display_columns = [
+        'group_name', 'wins', 'sample_size', 'avg_primal_gap', 'std_dev_primal_gap',
+        '25th_percentile', 'median', '75th_percentile'
+    ]
+    df = summary_results_df[display_columns].sort_values(by='wins', ascending=False)
+    
     st.subheader("Primal Gap Results")
     st.dataframe(df)
 
