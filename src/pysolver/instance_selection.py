@@ -3,22 +3,24 @@ from .connection import query_to_df
 import streamlit as st
 
 def instance_selection_ui(): 
-    st.subheader("Instances before filtering")
+    st.subheader("Instances with binary variables")
     st.write("This is the list of instances in MIPLIB that contain binary variables.")
 
     before_filter_df = get_instance_selection_base_df()
     st.dataframe(before_filter_df)
-    st.write(f"Total instances before filtering: {len(before_filter_df)}")
+    st.write(f"Instance count: {len(before_filter_df)}")
     
     st.subheader("Instances after filtering (mips gap > 0.05 and < 10)")
+    st.write("We select instances that have an medium level of difficulty. We use the MIP gap to assess difficulty.")
+
     after_filter_df = get_instance_selection_df()
     st.dataframe(after_filter_df)
-    st.write(f"Total instances after filtering: {len(after_filter_df)}")
+    st.write(f"Instance count: {len(after_filter_df)}")
 
     st.subheader("Selected Instances")
     selected_df = get_selected_instances_df()
     st.dataframe(selected_df)
-
+    st.write(f"Instance count: {len(selected_df)}")
 def get_instance_selection_base_query() -> str:
     return """
     WITH latest_jobs AS (
