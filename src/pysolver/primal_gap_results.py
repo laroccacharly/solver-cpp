@@ -58,3 +58,13 @@ def primal_gap_results_ui():
     df = query_to_df(query)
     st.subheader("Primal Gap Results")
     st.dataframe(df)
+
+    # keytake aways 
+    st.subheader("Key Takeaways")
+    st.markdown("""
+    - **Most Reliable Strategy (`warm_start`):**
+        - Choose `warm_start` if you need the approach most likely to produce the best result on any given instance. It is the most consistent and robust method, achieving the highest number of "wins."
+
+    - **Best Average Performance (`lns`):**
+        - Choose `lns` with a small fixing ratio if your primary goal is to achieve the best possible performance *on average* across all your problems. While it might not win on every single instance, it has the potential to find significantly better solutions for difficult problems where `warm_start` struggles.
+    """)
