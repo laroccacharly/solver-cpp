@@ -23,3 +23,7 @@ alias ui="uv run streamlit run ui.py"
 alias select="uv run python -m src.pysolver.make_instance_selection"
 alias metrics="uv run python -m src.pysolver.compute_metrics"
 alias instances="uv run instances_with_binary_variables.py"
+
+
+# Run all 
+alias runall="r syncdb && r seed && r grb_only && select && r warm_start && r lns && metrics"
