@@ -1,11 +1,11 @@
 import pandas as pd
-from .connection import get_connection, close_connection, query_to_df
+from .connection import query_to_df
 import streamlit as st
-from .set_best_obj_val import set_best_obj_val
-from .set_primal_gap import set_primal_gap
 
 def instance_selection_ui(): 
     st.subheader("Instances before filtering")
+    st.write("This is the list of instances in MIPLIB that contain binary variables.")
+
     before_filter_df = get_instance_selection_base_df()
     st.dataframe(before_filter_df)
     st.write(f"Total instances before filtering: {len(before_filter_df)}")
@@ -14,13 +14,6 @@ def instance_selection_ui():
     after_filter_df = get_instance_selection_df()
     st.dataframe(after_filter_df)
     st.write(f"Total instances after filtering: {len(after_filter_df)}")
-
-    if st.button("Make Selection"):
-        make_instance_selection()
-    if st.button("Set Best Obj Val"):
-        set_best_obj_val()
-    if st.button("Set Primal Gap"):
-        set_primal_gap()
 
     st.subheader("Selected Instances")
     selected_df = get_selected_instances_df()
@@ -61,26 +54,6 @@ def get_instance_selection_base_df() -> pd.DataFrame:
 
 def get_instance_selection_df() -> pd.DataFrame: 
     return query_to_df(get_instance_selection_query())
-
-def make_instance_selection():
-    df = get_instance_selection_df()
-    selected_instance_ids = df["instance_id"].tolist()
-
-    if not selected_instance_ids:
-        print("No instances to select.")
-        return
-
-
-    placeholders = ",".join("?" for _ in selected_instance_ids)
-    update_query = f"UPDATE instances SET selected = 1 WHERE id IN ({placeholders})"
-
-    con = get_connection()
-    cursor = con.cursor()
-    cursor.execute(update_query, selected_instance_ids)
-    con.commit()
-    print(f"Selected {len(selected_instance_ids)} instances.")
-    close_connection()
-
 
 def get_selected_instances_df() -> pd.DataFrame: 
     return query_to_df("SELECT * FROM instances WHERE selected = 1")
