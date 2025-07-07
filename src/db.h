@@ -62,6 +62,7 @@ struct Job {
     string instance_id; 
     int time_limit_s = 10;
     string group_name = ""; 
+    bool enable_callback = false;
     bool warm_start = false;
     bool enable_lns = false;
     int seed = 0;
@@ -94,6 +95,7 @@ inline auto get_storage() {
             make_column("instance_id", &Job::instance_id),
             make_column("group_name", &Job::group_name),
             make_column("time_limit_s", &Job::time_limit_s),
+            make_column("enable_callback", &Job::enable_callback),
             make_column("warm_start", &Job::warm_start),
             make_column("enable_lns", &Job::enable_lns),
             make_column("fixing_ratio", &Job::fixing_ratio),

@@ -183,12 +183,13 @@ void _solveJob(Job job) {
       binary_variables.size(),
       instance_name
     );
-    model.setCallback(&callbackState);
 
+    if (job.enable_callback) {
+      model.setCallback(&callbackState);
+    }
     model.optimize();
 
     fmt::print("Objective: {}\n", model.get(GRB_DoubleAttr_ObjVal));
-    callbackState.printSummary();
 
     auto storage = get_storage();
     int job_id = storage.insert(job);
@@ -206,11 +207,12 @@ void _solveJob(Job job) {
 
     storage.insert(attributes);
 
-    auto& metrics = callbackState.getMetrics();
-    for (auto& metric : metrics) {
-        metric.job_id = job.id;
-    }
-    batch_insert_metrics(metrics);
+    // TODO: pass in job id to callbackState at construction time
+    //auto& metrics = callbackState.getMetrics();
+    //for (auto& metric : metrics) {
+    //    metric.job_id = job.id;
+    //}
+    //batch_insert_metrics(metrics);
 }
 
 void solveJob(Job job) {
