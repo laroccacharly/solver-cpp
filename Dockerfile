@@ -5,15 +5,16 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
+COPY data/ data/
 # Install uv
 RUN pip install uv
 # Copy the project files
-COPY data/ data/
-COPY src/ src/
-COPY ui.py .
 COPY pyproject.toml .
 RUN uv sync 
-RUN uv pip install .  
+
+COPY src/ src/
+COPY ui.py .
+RUN uv pip install . 
 
 EXPOSE 8501
 
