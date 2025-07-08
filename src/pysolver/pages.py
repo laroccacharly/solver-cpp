@@ -16,5 +16,5 @@ def get_pages() -> list[Page]:
         Page(name="Instance Selection", function=instance_selection_ui),
         Page(name="Primal Gap Results", function=primal_gap_results_ui),
         Page(name="Tables", function=all_tables_ui),
-        # Page(name="Run SQL", function=run_sql_ui),
+        Page(name="Run SQL", function=run_sql_ui),
     ]
