@@ -1,17 +1,19 @@
 # solver-cpp 
 
-Example repo to demonstrate how to interact with the Gurobi solver to solve MIPLIB instancesin C++. It implements a random Large Neighbourhood Search heuristic and benchmarks it agains the Gurobi baseline. 
+Example repo to demonstrate how to interact with Gurobi to solve MIPLIB instances in C++. It implements a random Large Neighbourhood Search heuristic and benchmarks it against the Gurobi baseline. 
 
-- Data are stored on a local sqlite database. 
-- Dashboard is built using a streamlit app. 
+- Data is stored in a local SQLite database. 
+- Dashboard is built using a Streamlit app. 
+
+Live app: [solver-cpp.fly.dev](https://solver-cpp.fly.dev)
 
 # Dependencies 
-We assume you already installed the following:
+We assume you have already installed the following:
  - Gurobi 12
- - vcpkg to manage the c++ environment. 
- - uv to manage the python environment.
+ - vcpkg to manage the C++ environment. 
+ - uv to manage the Python environment.
 
-# Setup and installation 
+# Setup and Installation 
 All the commands required are available in env.sh. You can run this command to load the helper aliases. 
 ```
 source env.sh 
@@ -21,7 +23,7 @@ Download the MIPLIB instances:
 ```
 uv run setup_miplib.py
 ```
-update MPS_FILES_DIR accordingly. 
+Update MPS_FILES_DIR accordingly. 
 
 Build with vcpkg and cmake:
 ```
@@ -30,33 +32,32 @@ cmake --build build
 ```
 
 # Usage 
-Sync or create the db based on the schema. 
+Sync or create the database based on the schema: 
 ```
 run -a syncdb
 ```
 
-Seed the database with instance data 
+Seed the database with instance data: 
 ```
 run -a seed 
-````
+```
 
-Run a first set of experiments with gurobi
+Run a first set of experiments with Gurobi:
 ```
 run -a grb_only 
 ```
 
-Select instances that we are going to experiment with 
+Select instances that we are going to experiment with: 
 ```
 uv run python -m src.pysolver.make_instance_selection
 ```
 
-Run warm-start experiment 
+Run warm-start experiment: 
 ```
 run -a warm_start 
 ```
 
-Run lns experiment 
-
+Run LNS experiment:
 ```
 run -a lns
 ```
