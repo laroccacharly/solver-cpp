@@ -27,7 +27,7 @@ _duck_connection = None
 def get_duckdb_connection() -> duckdb.DuckDBPyConnection:
     global _duck_connection
     if _duck_connection is None:
-        _duck_connection = duckdb.connect()
+        _duck_connection = duckdb.connect(database=DB_PATH, read_only=True)
         _duck_connection.execute(f"ATTACH '{DB_PATH}' as sqlite_db (TYPE sqlite);")
         _duck_connection.execute("USE sqlite_db;")
     return _duck_connection
