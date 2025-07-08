@@ -27,3 +27,19 @@ alias instances="uv run instances_with_binary_variables.py"
 
 # Run all 
 alias runall="r syncdb && r seed && r grb_only && select && r warm_start && r lns && metrics"
+
+
+# Docker 
+export APP_NAME="solver-cpp"
+export IMAGE_NAME="$APP_NAME-image"
+export CONTAINER_NAME="$APP_NAME-container"
+export DOCKER_DEFAULT_PLATFORM=linux/amd64
+
+alias dbuild="docker build -t $IMAGE_NAME ."
+alias drun="echo "http://localhost:8501" && docker run --name $CONTAINER_NAME -p 8501:8501 -v $(pwd)/src:/app/src $IMAGE_NAME"
+alias start="echo "http://localhost:8501" && docker start -a $CONTAINER_NAME"
+alias stop="docker stop $CONTAINER_NAME"
+
+# Deploy 
+alias launch="fly launch --name $APP_NAME --no-deploy"
+alias deploy="fly deploy"
