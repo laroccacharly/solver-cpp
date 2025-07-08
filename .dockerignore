@@ -1,0 +1,12 @@
+# flyctl launch added from .gitignore
+**/*.log
+**/build
+**/.cache 
+**/*.csv
+**/.DS_Store
+**/*.egg-info
+**/*.pyc
+
+# flyctl launch added from .venv/.gitignore
+.venv/**/*
+fly.toml
