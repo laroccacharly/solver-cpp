@@ -2,20 +2,16 @@ import streamlit as st
 from .connection import query_with_duckdb
 import pandas as pd
 
-def primal_gap_results_ui(): 
-    """
-        Display the results for the primal gap for each job group. 
-        Only include instances that are selected (instance.selected = true)
-        Each row of the result table corresponds to a job group (groupby job.group_name). 
-        The value of primal gap is available in the grb_attributes table. 
-        Columns: 
-            - group_name: the name of the job group
-            - sample_size: number of values in the group
-            - avg_primal_gap: the average primal gap for the group
-            - max_primal_gap: the maximum primal gap for the group
-            - wins: the number of times that group holds the best objective value for that instance
-    """
-    
+def explanations(): 
+    st.markdown("""
+    Notes: 
+    - **Primal gap** is the gap relative to the best known solution for the instance (always positive). 
+    - **Warm start**: it uses the best solution found by the *grb_only* run and passes it to the solver as a starting point. 
+    - **LNS**: it randomly selects a subset of variables (configured by the fixing ratio) and fixes them to their value in the best solution found by the *grb_only* run. 
+    - All jobs are run with the same time limit of 10 seconds and 3 different seeds. 
+    """)
+
+def primal_gap_results_ui():     
     summary_query = """
         SELECT
             j.group_name,
@@ -72,15 +68,16 @@ def primal_gap_results_ui():
     ]
     df = summary_results_df[display_columns].sort_values(by='wins', ascending=False)
     
-    st.subheader("Primal Gap Results")
+    st.header("Performance Results")
+    explanations()
+    st.subheader("Distribution of the primal gap for each strategy")
     st.dataframe(df)
 
-    # keytake aways 
-    st.subheader("Key Takeaways")
+    # key takeaways 
+    st.subheader("Conclusions")
     st.markdown("""
-    - **Most Reliable Strategy (`warm_start`):**
-        - Choose `warm_start` if you need the approach most likely to produce the best result on any given instance. It is the most consistent and robust method, achieving the highest number of "wins."
-
-    - **Best Average Performance (`lns`):**
-        - Choose `lns` with a small fixing ratio if your primary goal is to achieve the best possible performance *on average* across all your problems. While it might not win on every single instance, it has the potential to find significantly better solutions for difficult problems where `warm_start` struggles.
+    - Based on the data, a smaller fixing ratio for the LNS is significantly more effective. As the fixing ratio increases from 0.05 to 0.80, the performance consistently degrades, with both the average and median primal gaps increasing and the number of wins decreasing. A high fixing ratio may be more effective for very difficult problems.
+    - The average is 2 orders of magnitude larger than the median which suggests that there are a few instances where the primal gap is very large. 
+    - If your goal is to have the best performance on the majority of problems and you can tolerate an occasional very poor result, warm_start looks good. It's more often the winner on a typical instance.
+    - If your goal is to have the most reliable performance and minimize the risk of a very bad outcome, lns_0.05 is the better choice. It might not win as often on the "easy" half of problems, but it is more stable and avoids the extreme performance degradations that hurt warm_start's average.
     """)
